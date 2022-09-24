@@ -1,0 +1,74 @@
+---
+title: "index"
+author: "shannon jaskiewicz"
+date: '2022-09-24'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+**566 HOMEWORK 1**
+
+```{r}
+
+# 566 HOMEWORK 1
+
+ library(tidyverse)
+ library(ggthemes)
+ library(scales)
+ library(ggrepel)
+ library(viridis)
+ library(geomtextpath)
+ library(MASS)
+
+# help(Boston)
+boston <- Boston %>%
+  filter(factor(rad) != "24")
+points.boston <- ggplot(data = boston,
+                        mapping = aes(x = crim,
+                                      y = medv*1000,
+                                      color = factor(rad))) +
+  geom_point(alpha = 0.5,
+             shape = 16) + 
+  geom_smooth(method = "loess", se = FALSE, size = 3) +
+  theme_minimal(base_size = 12) +
+  scale_x_log10() +
+  scale_y_log10() +
+  xlab("Crime rate (per 100,000 people)") +
+  ylab("Median value of homes (1978)") +
+  scale_y_continuous(trans = "log10",
+                     label = scales::dollar_format()) +
+  scale_x_continuous(trans = "log10") +
+  theme(legend.position = "none") 
+# find line ends for direct labeling
+line.ends <- ggplot_build(points.boston)$data[[2]] %>%
+  group_by(colour) %>%
+  filter(x==max(x))
+# add label for index for access to radial highways
+line.ends$rad <-
+boston %>% 
+  pull(rad) %>%
+  unique() %>%
+  as.character() %>%
+  sort() 
+# points.boston
+
+# add direct labels to graph
+points.boston2 <- points.boston + ggrepel::geom_label_repel(data = line.ends,
+                            aes(x = 10^line.ends$x,
+                                y = 10^line.ends$y,
+                                label = rad),
+                            nudge_x = 2,
+                            label.size = NA,
+                            fill = alpha(c("white"),0)) +
+  scale_color_viridis(discrete = TRUE) +
+  ggtitle("Boston Crime Rate by Median Home Value and \nIndex (1 = Low, 8 = High) of Access to Highways")
+points.boston2
+pdf("HW1_geom_points.pdf", height = 4.5, width = 7)
+print(points.boston2)
+dev.off()
+```
